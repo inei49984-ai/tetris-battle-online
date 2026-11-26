@@ -1,0 +1,17 @@
+{
+  "name": "tetris-battle-online",
+  "version": "1.0.0",
+  "description": "Online 1v1 Multiplayer Battle Tetris with Room Matchmaking, Quick Match, and CPU Practice - Ready for Render Free Plan",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/game-and-server.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TETRIS BATTLE ONLINE | リアルタイム対戦テトリス</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">T</div>
+      <div>
+        <div class="brand-title">TETRIS BATTLE ONLINE</div>
+        <div class="brand-sub">1v1 オンライン対戦 / T-Spin・おじゃまブロック対応</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <span id="connDot" class="dot"></span>
+        <span id="connText">サーバー接続中...</span>
+      </div>
+      <div class="status-pill" id="pingBadge">Ping: -- ms</div>
+      <button id="muteBtn" class="btn btn-sm" type="button">🔊 SFX ON</button>
+      <button id="settingsBtn" class="btn btn-sm" type="button">⚙ 操作設定</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="coldStartBanner" class="cold-start-banner hidden">
+      <span>⚡ 無料プラン（Render Free）のサーバーをスリープから起動しています。初回接続に30〜50秒ほどかかる場合があります。その間も「CPU対戦」や「ソロ練習」はすぐ遊べます！</span>
+    </div>
+
+    <!-- LOBBY VIEW -->
+    <section id="lobbyView">
+      <div class="lobby-hero">
+        <div>
+          <h1 style="font-size: 24px; margin-bottom: 6px;">オンライン対戦ロビー</h1>
+          <p style="font-size: 13px; color: var(--text-muted);">同じシード値のツモで戦うガチ1v1バトル！ラインを消しておじゃまブロックを送り合おう。</p>
+        </div>
+        <div class="player-name-box">
+          <label for="playerNameInput" style="font-size: 13px; color: var(--text-muted);">プレイヤー名</label>
+          <input id="playerNameInput" class="input" type="text" maxlength="16" placeholder="Player" />
+        </div>
+        <div class="lobby-stats-row">
+          <div class="stat-chip">オンライン<strong id="statOnline">0</strong></div>
+          <div class="stat-chip">マッチング待ち<strong id="statQueue">0</strong></div>
+          <div class="stat-chip">対戦中<strong id="statBattles">0</strong></div>
+        </div>
+      </div>
+
+      <div class="mode-grid">
+        <div class="mode-card">
+          <div>
+            <h2>⚡ クイックマッチ <span class="badge">1v1 ランダム</span></h2>
+            <p>ボタンを押すだけで世界中のプレイヤーと自動マッチング！1本勝負のスピードバトル。</p>
+          </div>
+          <div>
+            <button id="quickMatchBtn" class="btn btn-primary" style="width: 100%;" type="button">対戦相手を探す</button>
+            <button id="cancelQueueBtn" class="btn btn-danger hidden" style="width: 100%; margin-top: 8px;" type="button">マッチングをキャンセル</button>
+            <div id="queueStatus" style="margin-top: 8px; font-size: 13px; color: var(--accent-cyan);" class="hidden">対戦相手を探しています...</div>
+          </div>
+        </div>
+
+        <div class="mode-card">
+          <div>
+            <h2>🤝 フレンド対戦 <span class="badge">合言葉ルーム</span></h2>
+            <p>ルームを作ってURLや4桁のルームIDを友達に共有！2本先取やレベル設定も変更できます。</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="createRoomBtn" class="btn btn-purple" type="button">新しいルームを作る</button>
+            <div class="join-row">
+              <input id="roomCodeInput" class="input" type="text" maxlength="6" placeholder="ルームID" />
+              <button id="joinRoomBtn" class="btn" type="button">参加</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-card">
+          <div>
+            <h2>🤖 CPU対戦 / 練習 <span class="badge">オフライン可</span></h2>
+            <p>相手を待たずにAIと対戦！サーバー起動待ちの暇つぶしやT-Spinの練習にも最適です。</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <select id="cpuDifficultySelect" class="select">
+              <option value="easy">CPU 強さ: かんたん (Easy)</option>
+              <option value="normal" selected>CPU 強さ: ふつう (Normal)</option>
+              <option value="hard">CPU 強さ: つよい (Hard)</option>
+            </select>
+            <button id="startCpuBtn" class="btn btn-green" type="button">CPUと1v1対戦</button>
+            <button id="startSoloBtn" class="btn" type="button">一人用マラソン練習</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-guide">
+        <h3>🎮 基本操作（PCキーボード / スマホは画面ボタン対応）</h3>
+        <div class="key-grid">
+          <div class="key-item"><span>左右移動</span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
+          <div class="key-item"><span>ソフトドロップ</span><span><kbd>↓</kbd></span></div>
+          <div class="key-item"><span>ハードドロップ</span><span><kbd>Space</kbd></span></div>
+          <div class="key-item"><span>右回転</span><span><kbd>↑</kbd> / <kbd>X</kbd></span></div>
+          <div class="key-item"><span>左回転</span><span><kbd>Z</kbd></span></div>
+          <div class="key-item"><span>ホールド</span><span><kbd>C</kbd> / <kbd>Shift</kbd></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WAITING ROOM VIEW -->
+    <section id="roomView" class="hidden">
+      <div class="room-card">
+        <div class="room-header">
+          <div>
+            <div style="font-size: 12px; color: var(--text-muted);">ルームID</div>
+            <div id="displayRoomCode" class="room-code">----</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="copyRoomUrlBtn" class="btn btn-sm btn-primary" type="button">🔗 招待リンクをコピー</button>
+            <button id="leaveRoomBtn" class="btn btn-sm btn-danger" type="button">退出</button>
+          </div>
+        </div>
+
+        <div class="players-vs">
+          <div id="slot0" class="player-slot">
+            <div class="slot-name" style="font-size: 18px; font-weight: 800;">---</div>
+            <div class="slot-status" style="margin-top: 6px; font-size: 13px; color: var(--text-muted);">待機中</div>
+          </div>
+          <div class="vs-badge">VS</div>
+          <div id="slot1" class="player-slot">
+            <div class="slot-name" style="font-size: 18px; font-weight: 800;">参加者を待機中...</div>
+            <div class="slot-status" style="margin-top: 6px; font-size: 13px; color: var(--text-muted);">---</div>
+          </div>
+        </div>
+
+        <div class="room-settings">
+          <div class="setting-field">
+            <label for="settingTargetWins">勝利条件</label>
+            <select id="settingTargetWins" class="select">
+              <option value="1">1本勝負</option>
+              <option value="2" selected>2本先取 (BO3)</option>
+              <option value="3">3本先取 (BO5)</option>
+            </select>
+          </div>
+          <div class="setting-field">
+            <label for="settingStartLevel">開始レベル (落下速度)</label>
+            <select id="settingStartLevel" class="select">
+              <option value="1" selected>Lv.1 (標準)</option>
+              <option value="3">Lv.3 (やや速い)</option>
+              <option value="5">Lv.5 (高速)</option>
+              <option value="8">Lv.8 (超高速)</option>
+            </select>
+          </div>
+          <div class="setting-field">
+            <label for="settingGarbageMult">おじゃま倍率</label>
+            <select id="settingGarbageMult" class="select">
+              <option value="0.5">0.5x (ゆるやか)</option>
+              <option value="1" selected>1.0x (標準)</option>
+              <option value="1.5">1.5x (激しい)</option>
+              <option value="2">2.0x (カオス)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+          <button id="readyBtn" class="btn btn-green" style="min-width: 240px; font-size: 16px;" type="button">準備完了！</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BATTLE ARENA VIEW -->
+    <section id="battleView" class="hidden">
+      <div class="battle-header">
+        <div>
+          <span id="battleModeLabel" class="badge">1v1 BATTLE</span>
+          <span id="roundLabel" style="margin-left: 8px; font-weight: 700; font-size: 14px;">ROUND 1</span>
+        </div>
+        <div class="score-banner">
+          <span id="myBannerName">YOU</span>
+          <span id="myWinPips" class="win-pips"></span>
+          <span style="color: var(--accent-pink);">VS</span>
+          <span id="oppWinPips" class="win-pips"></span>
+          <span id="oppBannerName">OPPONENT</span>
+        </div>
+        <button id="exitBattleBtn" class="btn btn-sm btn-danger" type="button">対戦を終了</button>
+      </div>
+
+      <div class="arena">
+        <!-- MY BOARD -->
+        <div class="player-stage">
+          <div id="myEmoteBubble" class="emote-bubble hidden"></div>
+          <div class="side-col">
+            <div class="panel-box">
+              <div class="panel-title">HOLD</div>
+              <canvas id="myHoldCanvas" width="80" height="64"></canvas>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">SCORE</div>
+              <div id="myScore" class="metric-val">0</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">ATTACK</div>
+              <div id="myAttack" class="metric-val" style="color: var(--accent-pink);">0</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">LINES / LV</div>
+              <div id="myLinesLevel" class="metric-val" style="font-size: 13px;">0 / Lv.1</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">PPS / APM</div>
+              <div id="mySpeed" class="metric-val" style="font-size: 13px;">0.0 / 0</div>
+            </div>
+          </div>
+
+          <div class="board-wrap">
+            <div class="garbage-track" title="おじゃま予告">
+              <div id="myGarbageFill" class="garbage-fill"></div>
+            </div>
+            <canvas id="myBoardCanvas" class="board-canvas my-board" width="300" height="600"></canvas>
+            <div class="board-overlay">
+              <div id="countdownOverlay" class="countdown-text hidden">3</div>
+              <div id="myActionToast" class="action-toast hidden"></div>
+            </div>
+          </div>
+
+          <div class="side-col">
+            <div class="panel-box">
+              <div class="panel-title">NEXT</div>
+              <canvas id="myNextCanvas" width="80" height="320"></canvas>
+            </div>
+            <div id="b2bBadge" class="panel-box hidden" style="border-color: var(--accent-gold);">
+              <div class="panel-title" style="color: var(--accent-gold);">BACK TO BACK</div>
+            </div>
+            <div id="comboBadge" class="panel-box hidden" style="border-color: var(--accent-cyan);">
+              <div id="comboText" class="panel-title" style="color: var(--accent-cyan);">0 REN</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OPPONENT BOARD -->
+        <div id="opponentStage" class="player-stage opponent-stage">
+          <div id="oppEmoteBubble" class="emote-bubble hidden"></div>
+          <div class="board-wrap">
+            <div class="garbage-track opp-track">
+              <div id="oppGarbageFill" class="garbage-fill"></div>
+            </div>
+            <canvas id="oppBoardCanvas" class="board-canvas opp-board" width="220" height="440"></canvas>
+            <div class="board-overlay">
+              <div id="oppActionToast" class="action-toast hidden" style="font-size: 15px;"></div>
+            </div>
+          </div>
+          <div class="side-col" style="width: 84px;">
+            <div class="panel-box">
+              <div class="panel-title">OPPONENT</div>
+              <div id="oppNameLabel" style="font-size: 12px; font-weight: 800; word-break: break-all;">---</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">HOLD</div>
+              <canvas id="oppHoldCanvas" width="66" height="54"></canvas>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">SCORE</div>
+              <div id="oppScore" class="metric-val" style="font-size: 14px;">0</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">ATTACK</div>
+              <div id="oppAttack" class="metric-val" style="font-size: 14px; color: var(--accent-pink);">0</div>
+            </div>
+            <div class="panel-box">
+              <div class="panel-title">LINES</div>
+              <div id="oppLines" class="metric-val" style="font-size: 14px;">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="emoteBar" class="emote-bar">
+        <button class="btn btn-sm emote-btn" data-emote="よろしく！" type="button">👋 よろしく！</button>
+        <button class="btn btn-sm emote-btn" data-emote="ナイス！" type="button">👍 ナイス！</button>
+        <button class="btn btn-sm emote-btn" data-emote="熱い！" type="button">🔥 熱い！</button>
+        <button class="btn btn-sm emote-btn" data-emote="やばい！" type="button">😱 やばい！</button>
+        <button class="btn btn-sm emote-btn" data-emote="GG！" type="button">🎉 GG！</button>
+      </div>
+
+      <div class="touch-controls">
+        <button class="touch-btn" data-act="hold" type="button">HOLD</button>
+        <button class="touch-btn" data-act="left" type="button">◀</button>
+        <button class="touch-btn" data-act="down" type="button">▼</button>
+        <button class="touch-btn" data-act="right" type="button">▶</button>
+        <button class="touch-btn" data-act="rotL" type="button">↺</button>
+        <button class="touch-btn" data-act="rotR" type="button">↻</button>
+        <button class="touch-btn" data-act="drop" type="button" style="min-width: 82px; background: rgba(0,229,255,0.22);">DROP</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- MATCH RESULT MODAL -->
+  <div id="resultModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2 id="resultTitle" style="font-size: 28px;">YOU WIN!</h2>
+      <p id="resultSubtitle" style="color: var(--text-muted); font-size: 14px; margin-bottom: 14px;"></p>
+      <div id="resultStats" style="background: rgba(255,255,255,0.05); padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.8;"></div>
+      <div class="modal-actions">
+        <button id="resultLobbyBtn" class="btn" type="button">ロビーへ戻る</button>
+        <button id="rematchBtn" class="btn btn-primary" type="button">再戦する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2>⚙ 操作チューニング (DAS / ARR)</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">横移動の反応速度を好みに合わせて調整できます。</p>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 13px;">DAS（長押し発動までの遅延）: <strong id="dasValue">130</strong> ms</label>
+          <input id="dasRange" type="range" min="60" max="240" step="10" value="130" style="width: 100%;" />
+        </div>
+        <div>
+          <label style="font-size: 13px;">ARR（連続横移動の間隔）: <strong id="arrValue">25</strong> ms</label>
+          <input id="arrRange" type="range" min="0" max="80" step="5" value="25" style="width: 100%;" />
+        </div>
+        <div>
+          <label style="font-size: 13px;">ソフトドロップ間隔: <strong id="sdfValue">35</strong> ms</label>
+          <input id="sdfRange" type="range" min="15" max="100" step="5" value="35" style="width: 100%;" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="closeSettingsBtn" class="btn btn-primary" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastNotice" class="toast-notice hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
